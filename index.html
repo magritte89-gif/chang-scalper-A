@@ -31,6 +31,7 @@
         border-radius: 8px;
         border: none;
         font-size: 1rem;
+        box-sizing: border-box;
     }
     input {
         background: #3b3b3b;
@@ -43,6 +44,7 @@
     }
     button:hover {
         background: #616161;
+        cursor: pointer;
     }
     .result-box {
         background: #333;
@@ -73,7 +75,7 @@
 
 <div class="section">
     <h2>1) 종목 입력</h2>
-    <input id="ticker" placeholder="예: 005930 (삼성전자)" />
+    <input id="ticker" placeholder="예: 005930 또는 MSFT" />
     <button onclick="fetchData()">데이터 로딩하기</button>
 </div>
 
@@ -84,40 +86,87 @@
 
 <script>
 // =============== API KEY 입력 ===============
-const API_KEY = "RU288LYDRA1FH4H4";   // ← Chad의 Alpha Vantage 키
+const API_KEY = "RU288LYDRA1FH4H4";   // ← Chad의 Alpha Vantage 키 그대로
+
+// 한국/미국 심볼 처리: 숫자만 있으면 .KS, 아니면 그대로 사용
+function buildSymbol(raw) {
+    const t = raw.trim().toUpperCase();
+    if (!t) return null;
+    // 숫자만 → 한국 코드로 보고 .KS 붙이기
+    if (/^\d+$/.test(t)) {
+        return t + ".KS";
+    }
+    // 이미 .KS / .KQ 등 붙어 있으면 그대로
+    if (t.endsWith(".KS") || t.endsWith(".KQ")) {
+        return t;
+    }
+    // 그 외 → 해외 종목으로 보고 그대로 사용
+    return t;
+}
 
 // =============== 메인 데이터 수집 함수 ===============
 async function fetchData() {
-    const ticker = document.getElementById("ticker").value.trim();
-    if (!ticker) {
+    const rawTicker = document.getElementById("ticker").value;
+    const symbol = buildSymbol(rawTicker);
+
+    if (!symbol) {
         alert("종목 코드를 입력해주세요!");
         return;
     }
 
-    const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${ticker}.KS&apikey=${API_KEY}`;
+    const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${encodeURIComponent(symbol)}&apikey=${API_KEY}`;
 
-    document.getElementById("analysis").innerHTML = "데이터 불러오는 중...⏳";
+    document.getElementById("analysis").innerHTML = `데이터 불러오는 중...⏳<br><small>심볼: ${symbol}</small>`;
 
     try {
         const res = await fetch(url);
         const data = await res.json();
 
+        // 디버그용: 브라우저 콘솔에서 전체 응답 확인 가능
+        console.log("Alpha Vantage 응답:", data);
+
+        // 호출 제한 초과 메시지
+        if (data["Note"]) {
+            document.getElementById("analysis").innerHTML =
+                "⚠ 호출 제한에 걸렸습니다.<br>무료 키는 1분당/일당 호출 횟수 제한이 있습니다.<br><br>" +
+                "<small>" + data["Note"] + "</small>";
+            return;
+        }
+
+        // 에러 메시지 (심볼 잘못 등)
+        if (data["Error Message"]) {
+            document.getElementById("analysis").innerHTML =
+                "⚠ 심볼 오류 또는 지원되지 않는 종목일 수 있습니다.<br><br>" +
+                "<small>" + data["Error Message"] + "</small>";
+            return;
+        }
+
         if (!data["Time Series (Daily)"]) {
-            document.getElementById("analysis").innerHTML = "데이터 오류 또는 조회 제한 발생!";
+            document.getElementById("analysis").innerHTML =
+                "데이터 구조를 읽을 수 없습니다. (Time Series (Daily) 없음)<br>" +
+                "심볼 또는 Alpha Vantage 정책 문제일 수 있습니다.";
             return;
         }
 
         evaluateStock(data["Time Series (Daily)"]);
     } catch (e) {
-        document.getElementById("analysis").innerHTML = "네트워크 오류 또는 CORS 차단!";
+        console.error(e);
+        document.getElementById("analysis").innerHTML =
+            "네트워크 오류 또는 CORS 차단이 발생했습니다.";
     }
 }
 
 // =============== 핵심 로직: 단타 공식 A 기준 분석 ===============
 function evaluateStock(timeData) {
-    const dates = Object.keys(timeData).slice(0, 25); 
+    const dates = Object.keys(timeData).slice(0, 25);
     const prices = dates.map(d => parseFloat(timeData[d]["4. close"]));
     const volumes = dates.map(d => parseFloat(timeData[d]["5. volume"]));
+
+    if (prices.length < 20 || volumes.length < 2) {
+        document.getElementById("analysis").innerHTML =
+            "데이터가 충분하지 않습니다. (20일 이상 필요)";
+        return;
+    }
 
     const ma5 = avg(prices.slice(0, 5));
     const ma20 = avg(prices.slice(0, 20));
@@ -145,15 +194,20 @@ function evaluateStock(timeData) {
         reasons.push("거래량 증가 (수급 유입)");
     }
 
-    const rsi = calcRSI(prices.reverse());
+    const rsi = calcRSI([...prices].reverse()); // RSI 계산용으로 역순 복사
+
     if (rsi >= 45 && rsi <= 60) {
         score += 1;
-        reasons.push("RSI 건강 구간");
+        reasons.push("RSI 건강 구간 (45~60)");
+    } else if (rsi > 70) {
+        reasons.push("RSI 과열 구간 (70 이상)");
+    } else if (rsi < 30) {
+        reasons.push("RSI 과매도 구간 (30 이하)");
     }
 
     let signal = "";
     if (score >= 3) signal = "🟢 매수 유력";
-    else if (score == 2) signal = "🟡 관망";
+    else if (score === 2) signal = "🟡 관망";
     else signal = "🔴 매수주의";
 
     const resultHTML = `
@@ -187,14 +241,13 @@ function avg(arr) {
 function calcRSI(values) {
     let gains = 0, losses = 0;
     for (let i = 1; i < values.length; i++) {
-        let diff = values[i] - values[i - 1];
+        const diff = values[i] - values[i - 1];
         if (diff > 0) gains += diff;
         else losses -= diff;
     }
-    let rs = gains / (losses || 1);
+    const rs = gains / (losses || 1);
     return 100 - (100 / (1 + rs));
 }
-
 </script>
 </body>
 </html>

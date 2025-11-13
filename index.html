@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>창혁 단타 시뮬레이터 A-Ver</title>
+
+<style>
+    body {
+        background: #1e1e1e;
+        color: #dedede;
+        font-family: 'Noto Sans KR', sans-serif;
+        padding: 15px;
+    }
+    h1 {
+        text-align: center;
+        color: #ffffff;
+        margin-bottom: 10px;
+    }
+    .section {
+        background: #2b2b2b;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    input, button {
+        width: 100%;
+        padding: 12px;
+        margin-top: 8px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        border: none;
+        font-size: 1rem;
+    }
+    input {
+        background: #3b3b3b;
+        color: white;
+    }
+    button {
+        background: #4a4a4a;
+        color: white;
+        font-weight: bold;
+    }
+    button:hover {
+        background: #616161;
+    }
+    .result-box {
+        background: #333;
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 15px;
+    }
+    .tag {
+        background: #444;
+        padding: 4px 8px;
+        border-radius: 4px;
+        margin-right: 6px;
+        font-size: 0.8rem;
+        display: inline-block;
+        margin-bottom: 4px;
+    }
+    hr {
+        border: 0;
+        border-top: 1px solid #555;
+        margin: 15px 0;
+    }
+</style>
+
+</head>
+<body>
+
+<h1>📈 창혁 단타 시뮬레이터 A-Ver</h1>
+
+<div class="section">
+    <h2>1) 종목 입력</h2>
+    <input id="ticker" placeholder="예: 005930 (삼성전자)" />
+    <button onclick="fetchData()">데이터 로딩하기</button>
+</div>
+
+<div class="section">
+    <h2>2) 자동 분석 결과</h2>
+    <div id="analysis" class="result-box">여기에 결과가 표시됩니다.</div>
+</div>
+
+<script>
+// =============== API KEY 입력 ===============
+const API_KEY = "RU288LYDRA1FH4H4";   // ← Chad의 Alpha Vantage 키
+
+// =============== 메인 데이터 수집 함수 ===============
+async function fetchData() {
+    const ticker = document.getElementById("ticker").value.trim();
+    if (!ticker) {
+        alert("종목 코드를 입력해주세요!");
+        return;
+    }
+
+    const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${ticker}.KS&apikey=${API_KEY}`;
+
+    document.getElementById("analysis").innerHTML = "데이터 불러오는 중...⏳";
+
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!data["Time Series (Daily)"]) {
+            document.getElementById("analysis").innerHTML = "데이터 오류 또는 조회 제한 발생!";
+            return;
+        }
+
+        evaluateStock(data["Time Series (Daily)"]);
+    } catch (e) {
+        document.getElementById("analysis").innerHTML = "네트워크 오류 또는 CORS 차단!";
+    }
+}
+
+// =============== 핵심 로직: 단타 공식 A 기준 분석 ===============
+function evaluateStock(timeData) {
+    const dates = Object.keys(timeData).slice(0, 25); 
+    const prices = dates.map(d => parseFloat(timeData[d]["4. close"]));
+    const volumes = dates.map(d => parseFloat(timeData[d]["5. volume"]));
+
+    const ma5 = avg(prices.slice(0, 5));
+    const ma20 = avg(prices.slice(0, 20));
+
+    const today = prices[0];
+    const yesterdayVol = volumes[1];
+
+    let score = 0;
+    let reasons = [];
+
+    if (today > ma20) {
+        score += 1;
+        reasons.push("20일선 위 (안전)");
+    } else {
+        reasons.push("20일선 아래 → 위험");
+    }
+
+    if (ma5 > ma20) {
+        score += 1;
+        reasons.push("5일선이 20일선 상향 돌파");
+    }
+
+    if (volumes[0] > yesterdayVol * 1.5) {
+        score += 1;
+        reasons.push("거래량 증가 (수급 유입)");
+    }
+
+    const rsi = calcRSI(prices.reverse());
+    if (rsi >= 45 && rsi <= 60) {
+        score += 1;
+        reasons.push("RSI 건강 구간");
+    }
+
+    let signal = "";
+    if (score >= 3) signal = "🟢 매수 유력";
+    else if (score == 2) signal = "🟡 관망";
+    else signal = "🔴 매수주의";
+
+    const resultHTML = `
+        <h3>📌 분석 결과: ${signal}</h3>
+        <p>현재 가격: <b>${today.toLocaleString()}</b></p>
+        <p>RSI: <b>${rsi.toFixed(1)}</b></p>
+        <h4>조건 충족 내역:</h4>
+        ${reasons.map(r => `<div class='tag'>${r}</div>`).join("")}
+        <hr/>
+        <h4>🟢 매수 조건(점수 3 이상)</h4>
+        ✔ 20일선 위<br>
+        ✔ 5일선 > 20일선<br>
+        ✔ 거래량 +50% 이상<br>
+        ✔ RSI 45~60
+        <hr/>
+        <h4>🔻 매도 조건</h4>
+        ✔ 5일선 이탈<br>
+        ✔ RSI > 70<br>
+        ✔ 거래량 급감<br>
+        ✔ 손절 -3% / 익절 +5~7%
+    `;
+
+    document.getElementById("analysis").innerHTML = resultHTML;
+}
+
+// =============== 유틸 함수 ===============
+function avg(arr) {
+    return arr.reduce((a, b) => a + b, 0) / arr.length;
+}
+
+function calcRSI(values) {
+    let gains = 0, losses = 0;
+    for (let i = 1; i < values.length; i++) {
+        let diff = values[i] - values[i - 1];
+        if (diff > 0) gains += diff;
+        else losses -= diff;
+    }
+    let rs = gains / (losses || 1);
+    return 100 - (100 / (1 + rs));
+}
+
+</script>
+</body>
+</html>

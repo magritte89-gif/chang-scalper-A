@@ -10,12 +10,19 @@
         background: #1e1e1e;
         color: #dedede;
         font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
         padding: 15px;
+        box-sizing: border-box;
     }
     h1 {
         text-align: center;
         color: #ffffff;
         margin-bottom: 10px;
+        font-size: 1.6rem;
+    }
+    h2 {
+        margin: 0 0 10px 0;
+        font-size: 1.2rem;
     }
     .section {
         background: #2b2b2b;
@@ -37,6 +44,9 @@
         background: #3b3b3b;
         color: white;
     }
+    input::placeholder {
+        color: #aaaaaa;
+    }
     button {
         background: #4a4a4a;
         color: white;
@@ -51,6 +61,8 @@
         padding: 15px;
         border-radius: 10px;
         margin-top: 15px;
+        font-size: 0.95rem;
+        line-height: 1.5;
     }
     .tag {
         background: #444;
@@ -66,6 +78,23 @@
         border-top: 1px solid #555;
         margin: 15px 0;
     }
+    small {
+        color: #aaaaaa;
+        font-size: 0.8rem;
+    }
+
+    /* 모바일 최적화 */
+    @media (max-width: 600px) {
+        body {
+            padding: 10px;
+        }
+        h1 {
+            font-size: 1.3rem;
+        }
+        .section {
+            padding: 12px;
+        }
+    }
 </style>
 
 </head>
@@ -75,179 +104,100 @@
 
 <div class="section">
     <h2>1) 종목 입력</h2>
-    <input id="ticker" placeholder="예: 005930 또는 MSFT" />
+    <input id="ticker" placeholder="예: 005930 (삼성전자), 000660, MSFT, AAPL" />
     <button onclick="fetchData()">데이터 로딩하기</button>
+    <small>
+        · 숫자만 입력하면 KOSPI/KOSDAQ 자동 인식 (예: 005930 → 005930.KS)<br>
+        · 영문 티커는 해외 종목 그대로 사용 (예: MSFT, AAPL)
+    </small>
 </div>
 
 <div class="section">
     <h2>2) 자동 분석 결과</h2>
-    <div id="analysis" class="result-box">여기에 결과가 표시됩니다.</div>
+    <div id="analysis" class="result-box">
+        종목 코드를 입력하고 [데이터 로딩하기] 버튼을 눌러주세요.
+    </div>
 </div>
 
 <script>
-// =============== API KEY 입력 ===============
-const API_KEY = "RU288LYDRA1FH4H4";   // ← Chad의 Alpha Vantage 키 그대로
+// ✅ 서버 버전 API 주소 (이미 잘 동작 중인 주소)
+const API_BASE = "https://chang-scalper-api.onrender.com";
 
-// 한국/미국 심볼 처리: 숫자만 있으면 .KS, 아니면 그대로 사용
-function buildSymbol(raw) {
-    const t = raw.trim().toUpperCase();
-    if (!t) return null;
-    // 숫자만 → 한국 코드로 보고 .KS 붙이기
-    if (/^\d+$/.test(t)) {
-        return t + ".KS";
-    }
-    // 이미 .KS / .KQ 등 붙어 있으면 그대로
-    if (t.endsWith(".KS") || t.endsWith(".KQ")) {
-        return t;
-    }
-    // 그 외 → 해외 종목으로 보고 그대로 사용
-    return t;
-}
-
-// =============== 메인 데이터 수집 함수 ===============
+// 메인: 서버에 분석 요청
 async function fetchData() {
-    const rawTicker = document.getElementById("ticker").value;
-    const symbol = buildSymbol(rawTicker);
-
-    if (!symbol) {
+    const rawTicker = document.getElementById("ticker").value.trim();
+    if (!rawTicker) {
         alert("종목 코드를 입력해주세요!");
         return;
     }
 
-    const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${encodeURIComponent(symbol)}&apikey=${API_KEY}`;
-
-    document.getElementById("analysis").innerHTML = `데이터 불러오는 중...⏳<br><small>심볼: ${symbol}</small>`;
+    document.getElementById("analysis").innerHTML =
+        "서버에 분석 요청 중... ⏳<br><small>입력 심볼: " + rawTicker + "</small>";
 
     try {
+        const url = `${API_BASE}/analyze?symbol=${encodeURIComponent(rawTicker)}`;
         const res = await fetch(url);
         const data = await res.json();
 
-        // 디버그용: 브라우저 콘솔에서 전체 응답 확인 가능
-        console.log("Alpha Vantage 응답:", data);
+        console.log("API 응답:", data);
 
-        // 호출 제한 초과 메시지
-        if (data["Note"]) {
+        if (!res.ok || data.error) {
+            const msg = data.message || "알 수 없는 오류가 발생했습니다.";
             document.getElementById("analysis").innerHTML =
-                "⚠ 호출 제한에 걸렸습니다.<br>무료 키는 1분당/일당 호출 횟수 제한이 있습니다.<br><br>" +
-                "<small>" + data["Note"] + "</small>";
+                "⚠ 서버 오류 또는 심볼 문제<br><small>" + msg + "</small>";
             return;
         }
 
-        // 에러 메시지 (심볼 잘못 등)
-        if (data["Error Message"]) {
-            document.getElementById("analysis").innerHTML =
-                "⚠ 심볼 오류 또는 지원되지 않는 종목일 수 있습니다.<br><br>" +
-                "<small>" + data["Error Message"] + "</small>";
-            return;
-        }
-
-        if (!data["Time Series (Daily)"]) {
-            document.getElementById("analysis").innerHTML =
-                "데이터 구조를 읽을 수 없습니다. (Time Series (Daily) 없음)<br>" +
-                "심볼 또는 Alpha Vantage 정책 문제일 수 있습니다.";
-            return;
-        }
-
-        evaluateStock(data["Time Series (Daily)"]);
+        showResult(data);
     } catch (e) {
         console.error(e);
         document.getElementById("analysis").innerHTML =
-            "네트워크 오류 또는 CORS 차단이 발생했습니다.";
+            "네트워크 오류 또는 서버 접속 문제입니다. 잠시 후 다시 시도해 주세요.";
     }
 }
 
-// =============== 핵심 로직: 단타 공식 A 기준 분석 ===============
-function evaluateStock(timeData) {
-    const dates = Object.keys(timeData).slice(0, 25);
-    const prices = dates.map(d => parseFloat(timeData[d]["4. close"]));
-    const volumes = dates.map(d => parseFloat(timeData[d]["5. volume"]));
-
-    if (prices.length < 20 || volumes.length < 2) {
-        document.getElementById("analysis").innerHTML =
-            "데이터가 충분하지 않습니다. (20일 이상 필요)";
-        return;
-    }
-
-    const ma5 = avg(prices.slice(0, 5));
-    const ma20 = avg(prices.slice(0, 20));
-
-    const today = prices[0];
-    const yesterdayVol = volumes[1];
-
-    let score = 0;
-    let reasons = [];
-
-    if (today > ma20) {
-        score += 1;
-        reasons.push("20일선 위 (안전)");
-    } else {
-        reasons.push("20일선 아래 → 위험");
-    }
-
-    if (ma5 > ma20) {
-        score += 1;
-        reasons.push("5일선이 20일선 상향 돌파");
-    }
-
-    if (volumes[0] > yesterdayVol * 1.5) {
-        score += 1;
-        reasons.push("거래량 증가 (수급 유입)");
-    }
-
-    const rsi = calcRSI([...prices].reverse()); // RSI 계산용으로 역순 복사
-
-    if (rsi >= 45 && rsi <= 60) {
-        score += 1;
-        reasons.push("RSI 건강 구간 (45~60)");
-    } else if (rsi > 70) {
-        reasons.push("RSI 과열 구간 (70 이상)");
-    } else if (rsi < 30) {
-        reasons.push("RSI 과매도 구간 (30 이하)");
-    }
-
-    let signal = "";
-    if (score >= 3) signal = "🟢 매수 유력";
-    else if (score === 2) signal = "🟡 관망";
-    else signal = "🔴 매수주의";
+// 결과 화면 표시
+function showResult(data) {
+    const today = data.today_close;
+    const rsi = data.rsi;
+    const signalKor = data.signal_kor;
+    const reasons = data.reasons || [];
 
     const resultHTML = `
-        <h3>📌 분석 결과: ${signal}</h3>
-        <p>현재 가격: <b>${today.toLocaleString()}</b></p>
-        <p>RSI: <b>${rsi.toFixed(1)}</b></p>
+        <h3>📌 분석 결과: ${signalKor}</h3>
+        <p>실제 조회 심볼: <b>${data.symbol_used}</b></p>
+        <p>현재 가격: <b>${numberWithCommas(today)}원</b></p>
+        <p>5일선 / 20일선: <b>${numberWithCommas(data.ma5)} / ${numberWithCommas(data.ma20)}</b></p>
+        <p>금일 거래량 / 전일 거래량: <b>${numberWithCommas(data.volume_today)} / ${numberWithCommas(data.volume_prev)}</b></p>
+        <p>RSI(14): <b>${rsi.toFixed(1)}</b></p>
+
         <h4>조건 충족 내역:</h4>
         ${reasons.map(r => `<div class='tag'>${r}</div>`).join("")}
+
         <hr/>
-        <h4>🟢 매수 조건(점수 3 이상)</h4>
+        <h4>🟢 A-세트 매수 기준 (점수 3 이상 권장)</h4>
         ✔ 20일선 위<br>
-        ✔ 5일선 > 20일선<br>
-        ✔ 거래량 +50% 이상<br>
-        ✔ RSI 45~60
+        ✔ 5일선 > 20일선 (상승 추세)<br>
+        ✔ 거래량 전일 대비 +50% 이상<br>
+        ✔ RSI 45~60 (과열도, 과매도도 아닌 건강 구간)
+
         <hr/>
-        <h4>🔻 매도 조건</h4>
-        ✔ 5일선 이탈<br>
-        ✔ RSI > 70<br>
-        ✔ 거래량 급감<br>
-        ✔ 손절 -3% / 익절 +5~7%
+        <h4>🔻 매도 / 보수적 대응 기준</h4>
+        ✔ 5일선 이탈 시 정리 고려<br>
+        ✔ RSI > 70 과열 시 분할 매도 고려<br>
+        ✔ 거래량 급감 + 주가 약세 시 경계<br>
+        ✔ 손절: -3% 내외 / 익절: +5~7% 구간에서 계획적으로
     `;
 
     document.getElementById("analysis").innerHTML = resultHTML;
 }
 
-// =============== 유틸 함수 ===============
-function avg(arr) {
-    return arr.reduce((a, b) => a + b, 0) / arr.length;
-}
-
-function calcRSI(values) {
-    let gains = 0, losses = 0;
-    for (let i = 1; i < values.length; i++) {
-        const diff = values[i] - values[i - 1];
-        if (diff > 0) gains += diff;
-        else losses -= diff;
-    }
-    const rs = gains / (losses || 1);
-    return 100 - (100 / (1 + rs));
+// 숫자 천 단위 콤마
+function numberWithCommas(x) {
+    if (x === null || x === undefined) return "-";
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 </script>
+
 </body>
 </html>

@@ -14,60 +14,84 @@
         padding: 15px;
         box-sizing: border-box;
     }
+    .container {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
     h1 {
-        text-align: center;
-        color: #ffffff;
+        font-size: 1.4rem;
         margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    h1 span.icon {
         font-size: 1.6rem;
     }
-    h2 {
-        margin: 0 0 10px 0;
-        font-size: 1.2rem;
-    }
     .section {
-        background: #2b2b2b;
+        background: #262626;
         padding: 15px;
         border-radius: 10px;
-        margin-bottom: 20px;
+        margin-bottom: 16px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    }
+    .section-title {
+        font-weight: 600;
+        margin-bottom: 10px;
+        font-size: 1rem;
     }
     label {
-        font-size: 0.9rem;
         display: block;
-        margin-top: 4px;
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+        color: #cccccc;
     }
-    input, button {
+    input[type="text"], input[type="number"] {
         width: 100%;
-        padding: 12px;
-        margin-top: 4px;
-        margin-bottom: 8px;
-        border-radius: 8px;
-        border: none;
-        font-size: 1rem;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #555;
+        background: #1a1a1a;
+        color: #f0f0f0;
+        font-size: 0.9rem;
         box-sizing: border-box;
     }
-    input {
-        background: #3b3b3b;
-        color: white;
+    input[type="text"]::placeholder,
+    input[type="number"]::placeholder {
+        color: #777;
     }
-    input::placeholder {
-        color: #aaaaaa;
+    .row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .col {
+        flex: 1 1 200px;
     }
     button {
-        background: #4a4a4a;
+        width: 100%;
+        padding: 10px;
+        border-radius: 6px;
+        border: none;
+        background: #4caf50;
         color: white;
-        font-weight: bold;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        margin-top: 10px;
     }
     button:hover {
-        background: #616161;
-        cursor: pointer;
+        background: #43a047;
     }
-    .result-box {
-        background: #333;
-        padding: 15px;
-        border-radius: 10px;
-        margin-top: 15px;
-        font-size: 0.95rem;
-        line-height: 1.5;
+    .info-text {
+        font-size: 0.8rem;
+        color: #aaaaaa;
+        margin-top: 6px;
+        line-height: 1.4;
+    }
+    #analysis, #strategy {
+        font-size: 0.9rem;
+        line-height: 1.6;
     }
     .tag {
         background: #444;
@@ -92,50 +116,50 @@
         padding: 10px;
         border-radius: 8px;
         margin-top: 10px;
+        border: 1px solid #444;
+        font-size: 0.85rem;
     }
-
     @media (max-width: 600px) {
-        body {
-            padding: 10px;
-        }
-        h1 {
-            font-size: 1.3rem;
-        }
-        .section {
-            padding: 12px;
+        .row {
+            flex-direction: column;
         }
     }
 </style>
-
 </head>
 <body>
+<div class="container">
+    <h1><span class="icon">📊</span>창혁 단타 시뮬레이터 A-Ver</h1>
 
-<h1>📈 창혁 단타 시뮬레이터 A-Ver</h1>
+    <!-- 1) 기본 입력 -->
+    <div class="section">
+        <div class="section-title">1) 기본 입력</div>
+        <div class="row">
+            <div class="col">
+                <label for="ticker">종목 코드</label>
+                <input id="ticker" type="text" placeholder="예) 005930, 혹은 MSFT" />
+            </div>
+            <div class="col">
+                <label for="capital">투자 가능한 총 자본(원)</label>
+                <input id="capital" type="text" placeholder="예) 1,000,000" />
+            </div>
+        </div>
+        <button onclick="fetchData()">데이터 로딩하기</button>
+        <div class="info-text">
+            · 종목 코드는 숫자 또는 영문 티커를 입력해 주세요.<br/>
+            · 자본을 입력하면, 오늘 이 종목에 쓸 수 있는 권장 금액/주수를 함께 계산해 줍니다.
+        </div>
+    </div>
 
-<div class="section">
-    <h2>1) 기본 입력</h2>
-    <label for="ticker">종목 코드</label>
-    <input id="ticker" placeholder="예: 005930 (삼성전자), 000660, MSFT, AAPL" />
-
-    <label for="capital">투자 가능한 총 자본(원)</label>
-    <input id="capital" placeholder="예: 10000000 (생략 가능)" />
-
-    <button onclick="fetchData()">데이터 로딩하기</button>
-    <small>
-        · 종목 코드는 숫자 또는 영문 티커만 입력해 주세요.<br>
-        · 자본을 입력하면, 오늘 이 종목에 쓸 수 있는 <b>권장 금액/주수</b>를 함께 계산해 줍니다.
-    </small>
-</div>
-
-<div class="section">
-    <h2>2) 자동 분석 결과 & 오늘의 전략</h2>
-    <div id="analysis" class="result-box">
-        종목 코드와 자본(선택)을 입력하고 [데이터 로딩하기] 버튼을 눌러주세요.
+    <!-- 2) 자동 분석 결과 & 오늘의 전략 -->
+    <div class="section">
+        <div class="section-title">2) 자동 분석 결과 & 오늘의 전략</div>
+        <div id="analysis">종목과 자본을 입력 후 <b>데이터 로딩하기</b> 버튼을 눌러 주세요.</div>
+        <hr/>
+        <div id="strategy"></div>
     </div>
 </div>
 
 <script>
-// ✅ 서버 API 주소
 const API_BASE = "https://chang-scalper-api.onrender.com";
 
 // 메인: 서버에 분석 요청
@@ -149,21 +173,50 @@ async function fetchData() {
     }
 
     document.getElementById("analysis").innerHTML =
-        "서버에 분석 요청 중... ⏳<br><small>입력 심볼: " +
+        "서버에 분석 요청 중... ⏳<br><small>입력 종목: " +
         rawTicker + (rawCapital ? (", 자본: " + rawCapital) : "") +
         "</small>";
+    document.getElementById("strategy").innerHTML = "";
 
     try {
-        const url = `${API_BASE}/analyze?symbol=${encodeURIComponent(rawTicker)}&capital=${encodeURIComponent(rawCapital)}`;
+        const url = `${API_BASE}/analyze?symbol=${encodeURIComponent(
+            rawTicker
+        )}&capital=${encodeURIComponent(rawCapital)}`;
+
         const res = await fetch(url);
+        const contentType = res.headers.get("content-type") || "";
+
+        // 1) HTTP 상태 코드 체크
+        if (!res.ok) {
+            let msg = `HTTP ${res.status} 응답`;
+            try {
+                if (contentType.includes("application/json")) {
+                    const errBody = await res.json();
+                    if (errBody.message) msg += ` - ${errBody.message}`;
+                } else {
+                    const text = await res.text();
+                    msg += " / " + text.slice(0, 200);
+                }
+            } catch (e) {
+                // ignore
+            }
+
+            document.getElementById("analysis").innerHTML =
+                "⚠ 서버 오류<br><small>" + msg + "</small>";
+            return;
+        }
+
+        // 2) JSON 형식인지 확인
+        if (!contentType.includes("application/json")) {
+            throw new Error("서버 응답이 JSON 형식이 아닙니다.");
+        }
+
         const data = await res.json();
 
-        console.log("API 응답:", data);
-
-        if (!res.ok || data.error) {
+        if (data.error) {
             const msg = data.message || "알 수 없는 오류가 발생했습니다.";
             document.getElementById("analysis").innerHTML =
-                "⚠ 서버 오류 또는 심볼/자본 입력 문제<br><small>" + msg + "</small>";
+                "⚠ 서버 오류 또는 입력값 문제<br><small>" + msg + "</small>";
             return;
         }
 
@@ -171,17 +224,21 @@ async function fetchData() {
     } catch (e) {
         console.error(e);
         document.getElementById("analysis").innerHTML =
-            "네트워크 오류 또는 서버 접속 문제입니다. 잠시 후 다시 시도해 주세요.";
+            "네트워크 오류 또는 서버 접속 문제입니다.<br><small>" +
+            (e && e.message ? e.message : e) +
+            "</small>";
     }
 }
 
 // 결과 화면 표시
 function showResult(data) {
     const today = data.today_close;
-    const rsi = data.rsi;
+    const rsiRaw = data.rsi;
+    const rsiText =
+        typeof rsiRaw === "number" && !isNaN(rsiRaw) ? rsiRaw.toFixed(1) : "-";
     const signalKor = data.signal_kor;
     const reasons = data.reasons || [];
-    const strategy = data.strategy_text || "";
+    const strategy = (data.strategy_text || "").replace(/\n/g, "<br>");
 
     const capital = data.capital_input;
     const budget = data.position_budget;
@@ -193,22 +250,23 @@ function showResult(data) {
     const pos2Amount = data.pos2_amount;
     const pos3Amount = data.pos3_amount;
 
-    const strategyHtml = strategy
-        ? strategy.replace(/\n/g, "<br>")
-        : "전략 텍스트가 없습니다.";
-
     let positionHtml = "";
-    if (capital && budget && sharesTotal && sharesTotal > 0) {
+
+    if (
+        capital !== null &&
+        budget !== null &&
+        sharesTotal !== null &&
+        sharesTotal > 0
+    ) {
         positionHtml = `
         <div class="highlight-box">
-            <b>💰 오늘 이 종목에 쓸 수 있는 권장 금액 (예시)</b><br>
-            · 입력 자본: <b>${numberWithCommas(capital)}원</b><br>
-            · 이 종목에 사용할 최대 금액 (자본의 10% 가정): <b>${numberWithCommas(budget)}원</b><br>
-            · 현재가 기준 총 매수 가능 수량: <b>${numberWithCommas(sharesTotal)}주</b><br><br>
-            <b>표준형 분할 매수 (40% / 30% / 30%)</b><br>
-            · 1차: <b>${numberWithCommas(pos1Shares)}주</b> (약 ${numberWithCommas(pos1Amount)}원)<br>
-            · 2차: <b>${numberWithCommas(pos2Shares)}주</b> (약 ${numberWithCommas(pos2Amount)}원)<br>
-            · 3차: <b>${numberWithCommas(pos3Shares)}주</b> (약 ${numberWithCommas(pos3Amount)}원)<br>
+            <b>입력 자본:</b> 약 ${numberWithCommas(capital)}원<br>
+            <b>이 종목에 사용할 최대 금액(자본의 10% 가정):</b> 약 ${numberWithCommas(budget)}원<br>
+            <b>총 매수 가능 수량:</b> 약 ${numberWithCommas(sharesTotal)}주<br><br>
+            <b>표준형 분할 매수 (40% / 30% / 30%) 기준</b><br>
+            · 1차: ${numberWithCommas(pos1Shares)}주 (약 ${numberWithCommas(pos1Amount)}원)<br>
+            · 2차: ${numberWithCommas(pos2Shares)}주 (약 ${numberWithCommas(pos2Amount)}원)<br>
+            · 3차: ${numberWithCommas(pos3Shares)}주 (약 ${numberWithCommas(pos3Amount)}원)
         </div>`;
     } else {
         positionHtml = `
@@ -225,7 +283,7 @@ function showResult(data) {
         <p>현재 가격: <b>${numberWithCommas(today)}원</b></p>
         <p>5일선 / 20일선: <b>${numberWithCommas(data.ma5)} / ${numberWithCommas(data.ma20)}</b></p>
         <p>금일 거래량 / 전일 거래량: <b>${numberWithCommas(data.volume_today)} / ${numberWithCommas(data.volume_prev)}</b></p>
-        <p>RSI(14): <b>${rsi.toFixed(1)}</b></p>
+        <p>RSI(14): <b>${rsiText}</b></p>
 
         <h4>① 조건 충족 내역</h4>
         ${reasons.map(r => `<div class='tag'>${r}</div>`).join("")}
@@ -240,13 +298,10 @@ function showResult(data) {
         <hr/>
         <h4>③ 오늘 이 종목에 쓸 수 있는 권장 금액/주수</h4>
         ${positionHtml}
-
-        <hr/>
-        <h4>④ 오늘의 매매 시나리오 (Step-by-Step 가이드)</h4>
-        ${strategyHtml}
     `;
 
     document.getElementById("analysis").innerHTML = resultHTML;
+    document.getElementById("strategy").innerHTML = strategy;
 }
 
 // 숫자 천 단위 콤마 – 안전한 버전

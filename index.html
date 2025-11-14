@@ -30,10 +30,15 @@
         border-radius: 10px;
         margin-bottom: 20px;
     }
+    label {
+        font-size: 0.9rem;
+        display: block;
+        margin-top: 4px;
+    }
     input, button {
         width: 100%;
         padding: 12px;
-        margin-top: 8px;
+        margin-top: 4px;
         margin-bottom: 8px;
         border-radius: 8px;
         border: none;
@@ -82,8 +87,13 @@
         color: #aaaaaa;
         font-size: 0.8rem;
     }
+    .highlight-box {
+        background: #262626;
+        padding: 10px;
+        border-radius: 8px;
+        margin-top: 10px;
+    }
 
-    /* 모바일 최적화 */
     @media (max-width: 600px) {
         body {
             padding: 10px;
@@ -103,39 +113,48 @@
 <h1>📈 창혁 단타 시뮬레이터 A-Ver</h1>
 
 <div class="section">
-    <h2>1) 종목 입력</h2>
+    <h2>1) 기본 입력</h2>
+    <label for="ticker">종목 코드</label>
     <input id="ticker" placeholder="예: 005930 (삼성전자), 000660, MSFT, AAPL" />
+
+    <label for="capital">투자 가능한 총 자본(원)</label>
+    <input id="capital" placeholder="예: 10000000 (생략 가능)" />
+
     <button onclick="fetchData()">데이터 로딩하기</button>
     <small>
-        · 숫자만 입력하면 KOSPI/KOSDAQ 자동 인식 (예: 005930 → 005930.KS)<br>
-        · 영문 티커는 해외 종목 그대로 사용 (예: MSFT, AAPL)
+        · 종목 코드는 숫자 또는 영문 티커만 입력해 주세요.<br>
+        · 자본을 입력하면, 오늘 이 종목에 쓸 수 있는 <b>권장 금액/주수</b>를 함께 계산해 줍니다.
     </small>
 </div>
 
 <div class="section">
-    <h2>2) 자동 분석 결과</h2>
+    <h2>2) 자동 분석 결과 & 오늘의 전략</h2>
     <div id="analysis" class="result-box">
-        종목 코드를 입력하고 [데이터 로딩하기] 버튼을 눌러주세요.
+        종목 코드와 자본(선택)을 입력하고 [데이터 로딩하기] 버튼을 눌러주세요.
     </div>
 </div>
 
 <script>
-// ✅ 서버 버전 API 주소 (이미 잘 동작 중인 주소)
+// ✅ 서버 API 주소
 const API_BASE = "https://chang-scalper-api.onrender.com";
 
 // 메인: 서버에 분석 요청
 async function fetchData() {
     const rawTicker = document.getElementById("ticker").value.trim();
+    const rawCapital = document.getElementById("capital").value.trim();
+
     if (!rawTicker) {
         alert("종목 코드를 입력해주세요!");
         return;
     }
 
     document.getElementById("analysis").innerHTML =
-        "서버에 분석 요청 중... ⏳<br><small>입력 심볼: " + rawTicker + "</small>";
+        "서버에 분석 요청 중... ⏳<br><small>입력 심볼: " +
+        rawTicker + (rawCapital ? (", 자본: " + rawCapital) : "") +
+        "</small>";
 
     try {
-        const url = `${API_BASE}/analyze?symbol=${encodeURIComponent(rawTicker)}`;
+        const url = `${API_BASE}/analyze?symbol=${encodeURIComponent(rawTicker)}&capital=${encodeURIComponent(rawCapital)}`;
         const res = await fetch(url);
         const data = await res.json();
 
@@ -144,7 +163,7 @@ async function fetchData() {
         if (!res.ok || data.error) {
             const msg = data.message || "알 수 없는 오류가 발생했습니다.";
             document.getElementById("analysis").innerHTML =
-                "⚠ 서버 오류 또는 심볼 문제<br><small>" + msg + "</small>";
+                "⚠ 서버 오류 또는 심볼/자본 입력 문제<br><small>" + msg + "</small>";
             return;
         }
 
@@ -162,6 +181,43 @@ function showResult(data) {
     const rsi = data.rsi;
     const signalKor = data.signal_kor;
     const reasons = data.reasons || [];
+    const strategy = data.strategy_text || "";
+
+    const capital = data.capital_input;
+    const budget = data.position_budget;
+    const sharesTotal = data.shares_total;
+    const pos1Shares = data.pos1_shares;
+    const pos2Shares = data.pos2_shares;
+    const pos3Shares = data.pos3_shares;
+    const pos1Amount = data.pos1_amount;
+    const pos2Amount = data.pos2_amount;
+    const pos3Amount = data.pos3_amount;
+
+    const strategyHtml = strategy
+        ? strategy.replace(/\n/g, "<br>")
+        : "전략 텍스트가 없습니다.";
+
+    let positionHtml = "";
+    if (capital && budget && sharesTotal && sharesTotal > 0) {
+        positionHtml = `
+        <div class="highlight-box">
+            <b>💰 오늘 이 종목에 쓸 수 있는 권장 금액 (예시)</b><br>
+            · 입력 자본: <b>${numberWithCommas(capital)}원</b><br>
+            · 이 종목에 사용할 최대 금액 (자본의 10% 가정): <b>${numberWithCommas(budget)}원</b><br>
+            · 현재가 기준 총 매수 가능 수량: <b>${numberWithCommas(sharesTotal)}주</b><br><br>
+            <b>표준형 분할 매수 (40% / 30% / 30%)</b><br>
+            · 1차: <b>${numberWithCommas(pos1Shares)}주</b> (약 ${numberWithCommas(pos1Amount)}원)<br>
+            · 2차: <b>${numberWithCommas(pos2Shares)}주</b> (약 ${numberWithCommas(pos2Amount)}원)<br>
+            · 3차: <b>${numberWithCommas(pos3Shares)}주</b> (약 ${numberWithCommas(pos3Amount)}원)<br>
+        </div>`;
+    } else {
+        positionHtml = `
+        <div class="highlight-box">
+            자본을 입력하지 않아 오늘 이 종목에 쓸 수 있는 권장 금액/주수 계산은 생략되었습니다.<br>
+            화면 상단에 <b>'투자 가능한 총 자본(원)'</b>을 입력하고 다시 조회하면,
+            구체적인 분할 매수 금액과 주수를 함께 볼 수 있습니다.
+        </div>`;
+    }
 
     const resultHTML = `
         <h3>📌 분석 결과: ${signalKor}</h3>
@@ -171,22 +227,23 @@ function showResult(data) {
         <p>금일 거래량 / 전일 거래량: <b>${numberWithCommas(data.volume_today)} / ${numberWithCommas(data.volume_prev)}</b></p>
         <p>RSI(14): <b>${rsi.toFixed(1)}</b></p>
 
-        <h4>조건 충족 내역:</h4>
+        <h4>① 조건 충족 내역</h4>
         ${reasons.map(r => `<div class='tag'>${r}</div>`).join("")}
 
         <hr/>
-        <h4>🟢 A-세트 매수 기준 (점수 3 이상 권장)</h4>
-        ✔ 20일선 위<br>
-        ✔ 5일선 > 20일선 (상승 추세)<br>
-        ✔ 거래량 전일 대비 +50% 이상<br>
-        ✔ RSI 45~60 (과열도, 과매도도 아닌 건강 구간)
+        <h4>② 오늘의 손절/익절 참고 가격</h4>
+        · 손절가(약 -3%): <b>${numberWithCommas(data.stop_loss_price)}원</b><br>
+        · 1차 익절(+5%): <b>${numberWithCommas(data.tp1_price)}원</b><br>
+        · 2차 익절(+7%): <b>${numberWithCommas(data.tp2_price)}원</b><br>
+        <small>※ 위 가격은 참고용 가이드이며, 실제 매매는 본인 판단과 원칙이 최우선입니다.</small>
 
         <hr/>
-        <h4>🔻 매도 / 보수적 대응 기준</h4>
-        ✔ 5일선 이탈 시 정리 고려<br>
-        ✔ RSI > 70 과열 시 분할 매도 고려<br>
-        ✔ 거래량 급감 + 주가 약세 시 경계<br>
-        ✔ 손절: -3% 내외 / 익절: +5~7% 구간에서 계획적으로
+        <h4>③ 오늘 이 종목에 쓸 수 있는 권장 금액/주수</h4>
+        ${positionHtml}
+
+        <hr/>
+        <h4>④ 오늘의 매매 시나리오 (Step-by-Step 가이드)</h4>
+        ${strategyHtml}
     `;
 
     document.getElementById("analysis").innerHTML = resultHTML;
@@ -195,7 +252,7 @@ function showResult(data) {
 // 숫자 천 단위 콤마
 function numberWithCommas(x) {
     if (x === null || x === undefined) return "-";
-    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return x.toString().replace(/\B?(?=(\d{3})+(?!\d))/g, ",");
 }
 </script>
 

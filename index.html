@@ -249,10 +249,14 @@ function showResult(data) {
     document.getElementById("analysis").innerHTML = resultHTML;
 }
 
-// 숫자 천 단위 콤마
+// 숫자 천 단위 콤마 – 안전한 버전
 function numberWithCommas(x) {
-    if (x === null || x === undefined) return "-";
-    return x.toString().replace(/\B?(?=(\d{3})+(?!\d))/g, ",");
+    if (x === null || x === undefined || isNaN(x)) return "-";
+    try {
+        return Number(x).toLocaleString('ko-KR');
+    } catch (e) {
+        return x.toString();
+    }
 }
 </script>
 

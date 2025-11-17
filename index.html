@@ -1,319 +1,389 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>창혁 단타 시뮬레이터 A-Ver</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>창혁 단타 시뮬레이터 A-Ver</title>
 
-<style>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-        background: #1e1e1e;
-        color: #dedede;
-        font-family: 'Noto Sans KR', sans-serif;
-        margin: 0;
-        padding: 15px;
-        box-sizing: border-box;
+      background: #1e1e1e;
+      color: #dedede;
+      font-family: "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 20px;
     }
-    .container {
-        max-width: 1100px;
-        margin: 0 auto;
-    }
-    h1 {
-        font-size: 1.4rem;
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-    h1 span.icon {
-        font-size: 1.6rem;
-    }
-    .section {
-        background: #262626;
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 16px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.4);
-    }
-    .section-title {
-        font-weight: 600;
-        margin-bottom: 10px;
-        font-size: 1rem;
-    }
-    label {
-        display: block;
-        font-size: 0.85rem;
-        margin-bottom: 4px;
-        color: #cccccc;
-    }
-    input[type="text"], input[type="number"] {
-        width: 100%;
-        padding: 10px;
-        border-radius: 6px;
-        border: 1px solid #555;
-        background: #1a1a1a;
-        color: #f0f0f0;
-        font-size: 0.9rem;
-        box-sizing: border-box;
-    }
-    input[type="text"]::placeholder,
-    input[type="number"]::placeholder {
-        color: #777;
-    }
-    .row {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
-    .col {
-        flex: 1 1 200px;
-    }
-    button {
-        width: 100%;
-        padding: 10px;
-        border-radius: 6px;
-        border: none;
-        background: #4caf50;
-        color: white;
-        font-weight: 600;
-        font-size: 0.95rem;
-        cursor: pointer;
-        margin-top: 10px;
-    }
-    button:hover {
-        background: #43a047;
-    }
-    .info-text {
-        font-size: 0.8rem;
-        color: #aaaaaa;
-        margin-top: 6px;
-        line-height: 1.4;
-    }
-    #analysis, #strategy {
-        font-size: 0.9rem;
-        line-height: 1.6;
-    }
-    .tag {
-        background: #444;
-        padding: 4px 8px;
-        border-radius: 4px;
-        margin-right: 6px;
-        font-size: 0.8rem;
-        display: inline-block;
-        margin-bottom: 4px;
-    }
-    hr {
-        border: 0;
-        border-top: 1px solid #555;
-        margin: 15px 0;
-    }
-    small {
-        color: #aaaaaa;
-        font-size: 0.8rem;
-    }
-    .highlight-box {
-        background: #262626;
-        padding: 10px;
-        border-radius: 8px;
-        margin-top: 10px;
-        border: 1px solid #444;
-        font-size: 0.85rem;
-    }
-    @media (max-width: 600px) {
-        .row {
-            flex-direction: column;
-        }
-    }
-</style>
-</head>
-<body>
-<div class="container">
-    <h1><span class="icon">📊</span>창혁 단타 시뮬레이터 A-Ver</h1>
 
+    .app-wrapper {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    h1, h2, h3, h4 {
+      margin: 0;
+      padding: 0;
+    }
+
+    .card {
+      background: #242424;
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 0 0 1px #333;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .header-emoji {
+      font-size: 24px;
+    }
+
+    .sub-text {
+      font-size: 13px;
+      color: #a0a0a0;
+      margin-top: 4px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background: #141414;
+      color: #f1f1f1;
+      font-size: 14px;
+      outline: none;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+      border-color: #5aa9ff;
+      box-shadow: 0 0 0 1px #5aa9ff55;
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: 1.3fr 1.7fr;
+      gap: 16px;
+      margin-top: 10px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 768px) {
+      .input-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: #5aa9ff;
+      color: #0b0b0b;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.1s ease;
+    }
+
+    .btn-primary:hover {
+      background: #7bb9ff;
+      box-shadow: 0 0 0 1px #7bb9ff55;
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .notice-text {
+      font-size: 12px;
+      color: #888;
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+
+    #analysis {
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: normal;
+    }
+
+    .highlight-box {
+      background: #181818;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin: 8px 0;
+      border: 1px solid #383838;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 4px 8px;
+      margin: 2px 3px;
+      border-radius: 999px;
+      background: #333;
+      font-size: 12px;
+      color: #f5f5f5;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #333;
+      margin: 12px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-wrapper">
     <!-- 1) 기본 입력 -->
-    <div class="section">
-        <div class="section-title">1) 기본 입력</div>
-        <div class="row">
-            <div class="col">
-                <label for="ticker">종목 코드</label>
-                <input id="ticker" type="text" placeholder="예) 005930, 혹은 MSFT" />
-            </div>
-            <div class="col">
-                <label for="capital">투자 가능한 총 자본(원)</label>
-                <input id="capital" type="text" placeholder="예) 1,000,000" />
-            </div>
+    <div class="card">
+      <div class="header">
+        <div class="header-emoji">📊</div>
+        <div>
+          <h2>창혁 단타 시뮬레이터 A-Ver</h2>
+          <div class="sub-text">1) 기본 입력</div>
         </div>
-        <button onclick="fetchData()">데이터 로딩하기</button>
-        <div class="info-text">
-            · 종목 코드는 숫자 또는 영문 티커를 입력해 주세요.<br/>
-            · 자본을 입력하면, 오늘 이 종목에 쓸 수 있는 권장 금액/주수를 함께 계산해 줍니다.
+      </div>
+
+      <div class="input-row">
+        <div>
+          <label for="ticker">종목 코드 (예: 005930)</label>
+          <input id="ticker" type="text" placeholder="숫자 6자리 또는 심볼" />
         </div>
+        <div>
+          <label for="capital">투자 가능한 총 자본(원)</label>
+          <input id="capital" type="text" placeholder="예: 1,000,000" />
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="fetchData()">데이터 로딩하기</button>
+
+      <div class="notice-text">
+        · 종목 코드는 숫자 또는 영문 티커를 입력해 주세요.<br />
+        · 자본을 입력하면, 오늘 이 종목에 쓸 수 있는 권장 금액/주수를 함께 계산해 줍니다.
+      </div>
     </div>
 
     <!-- 2) 자동 분석 결과 & 오늘의 전략 -->
-    <div class="section">
-        <div class="section-title">2) 자동 분석 결과 & 오늘의 전략</div>
-        <div id="analysis">종목과 자본을 입력 후 <b>데이터 로딩하기</b> 버튼을 눌러 주세요.</div>
-        <hr/>
-        <div id="strategy"></div>
+    <div class="card">
+      <div class="header">
+        <div class="header-emoji">🧠</div>
+        <div>
+          <h3>자동 분석 결과 &amp; 오늘의 전략</h3>
+        </div>
+      </div>
+
+      <div id="analysis">
+        네트워크 오류 또는 서버 접속 문제입니다. 잠시 후 다시 시도해 주세요.<br />
+        (아직 조회 전이라면, 위에서 종목 코드와 자본을 입력한 뒤
+        <b>데이터 로딩하기</b> 버튼을 눌러 주세요.)
+      </div>
     </div>
-</div>
+  </div>
 
-<script>
-const API_BASE = "https://chang-scalper-api.onrender.com";
+  <script>
+    // ⚙️ API 서버 주소 (Render 백엔드 URL)
+    const API_BASE = "https://chang-scalper-api.onrender.com";
 
-// 메인: 서버에 분석 요청
-async function fetchData() {
-    const rawTicker = document.getElementById("ticker").value.trim();
-    const rawCapital = document.getElementById("capital").value.trim();
+    // ----------------------------
+    // 1. 데이터 요청 함수
+    // ----------------------------
+    async function fetchData() {
+      const rawTicker = document.getElementById("ticker").value.trim();
+      const rawCapital = document.getElementById("capital").value.trim();
 
-    if (!rawTicker) {
+      if (!rawTicker) {
         alert("종목 코드를 입력해주세요!");
         return;
-    }
+      }
 
-    document.getElementById("analysis").innerHTML =
-        "서버에 분석 요청 중... ⏳<br><small>입력 종목: " +
-        rawTicker + (rawCapital ? (", 자본: " + rawCapital) : "") +
+      const analysisEl = document.getElementById("analysis");
+      analysisEl.innerHTML =
+        "서버에 분석 요청 중... ⏳<br><small>입력 심볼: " +
+        rawTicker +
+        (rawCapital ? ", 자본: " + rawCapital : "") +
         "</small>";
-    document.getElementById("strategy").innerHTML = "";
 
-    try {
-        const url = `${API_BASE}/analyze?symbol=${encodeURIComponent(
-            rawTicker
-        )}&capital=${encodeURIComponent(rawCapital)}`;
+      try {
+        const url =
+          API_BASE +
+          "/analyze?symbol=" +
+          encodeURIComponent(rawTicker) +
+          "&capital=" +
+          encodeURIComponent(rawCapital);
 
         const res = await fetch(url);
-        const contentType = res.headers.get("content-type") || "";
 
-        // 1) HTTP 상태 코드 체크
-        if (!res.ok) {
-            let msg = `HTTP ${res.status} 응답`;
-            try {
-                if (contentType.includes("application/json")) {
-                    const errBody = await res.json();
-                    if (errBody.message) msg += ` - ${errBody.message}`;
-                } else {
-                    const text = await res.text();
-                    msg += " / " + text.slice(0, 200);
-                }
-            } catch (e) {
-                // ignore
-            }
+        // 먼저 텍스트로 받았다가 JSON 파싱 (에러 내용 확인용)
+        const rawText = await res.text();
+        let data = null;
 
-            document.getElementById("analysis").innerHTML =
-                "⚠ 서버 오류<br><small>" + msg + "</small>";
-            return;
+        try {
+          data = rawText ? JSON.parse(rawText) : null;
+        } catch (parseErr) {
+          console.error("JSON 파싱 실패:", parseErr, rawText);
+          analysisEl.innerHTML =
+            "⚠ 서버에서 올바른 형식(JSON)의 데이터를 받지 못했습니다.<br>" +
+            `<small>HTTP ${res.status} ${res.statusText}<br>` +
+            `응답 내용(앞부분): ${rawText.slice(0, 200)}</small>`;
+          return;
         }
 
-        // 2) JSON 형식인지 확인
-        if (!contentType.includes("application/json")) {
-            throw new Error("서버 응답이 JSON 형식이 아닙니다.");
-        }
-
-        const data = await res.json();
-
-        if (data.error) {
-            const msg = data.message || "알 수 없는 오류가 발생했습니다.";
-            document.getElementById("analysis").innerHTML =
-                "⚠ 서버 오류 또는 입력값 문제<br><small>" + msg + "</small>";
-            return;
+        if (!res.ok || !data || data.error) {
+          const msg =
+            (data && (data.message || data.error)) ||
+            `HTTP ${res.status} ${res.statusText}`;
+          analysisEl.innerHTML =
+            "⚠ 서버 오류 또는 심볼/자본 입력 문제<br><small>" + msg + "</small>";
+          return;
         }
 
         showResult(data);
-    } catch (e) {
-        console.error(e);
-        document.getElementById("analysis").innerHTML =
-            "네트워크 오류 또는 서버 접속 문제입니다.<br><small>" +
-            (e && e.message ? e.message : e) +
-            "</small>";
+      } catch (e) {
+        console.error("네트워크/JS 오류:", e);
+        analysisEl.innerHTML =
+          "네트워크 오류 또는 서버 접속 문제입니다. 잠시 후 다시 시도해 주세요.<br>" +
+          `<small>${e.message || e}</small>`;
+      }
     }
-}
 
-// 결과 화면 표시
-function showResult(data) {
-    const today = data.today_close;
-    const rsiRaw = data.rsi;
-    const rsiText =
-        typeof rsiRaw === "number" && !isNaN(rsiRaw) ? rsiRaw.toFixed(1) : "-";
-    const signalKor = data.signal_kor;
-    const reasons = data.reasons || [];
-    const strategy = (data.strategy_text || "").replace(/\n/g, "<br>");
+    // ----------------------------
+    // 2. 결과 화면 출력
+    // ----------------------------
+    function showResult(data) {
+      const today = data.today_close;
+      const rsi = data.rsi;
+      const signalKor = data.signal_kor || "신호 텍스트 없음";
+      const reasons = Array.isArray(data.reasons) ? data.reasons : [];
+      const strategy = data.strategy_text || "";
 
-    const capital = data.capital_input;
-    const budget = data.position_budget;
-    const sharesTotal = data.shares_total;
-    const pos1Shares = data.pos1_shares;
-    const pos2Shares = data.pos2_shares;
-    const pos3Shares = data.pos3_shares;
-    const pos1Amount = data.pos1_amount;
-    const pos2Amount = data.pos2_amount;
-    const pos3Amount = data.pos3_amount;
+      const capital = data.capital_input;
+      const budget = data.position_budget;
+      const sharesTotal = data.shares_total;
+      const pos1Shares = data.pos1_shares;
+      const pos2Shares = data.pos2_shares;
+      const pos3Shares = data.pos3_shares;
+      const pos1Amount = data.pos1_amount;
+      const pos2Amount = data.pos2_amount;
+      const pos3Amount = data.pos3_amount;
 
-    let positionHtml = "";
+      const strategyHtml = strategy
+        ? strategy.replace(/\n/g, "<br>")
+        : "전략 텍스트가 없습니다.";
 
-    if (
-        capital !== null &&
-        budget !== null &&
-        sharesTotal !== null &&
-        sharesTotal > 0
-    ) {
+      const rsiText =
+        typeof rsi === "number" && !isNaN(rsi) ? rsi.toFixed(1) : "-";
+
+      let positionHtml = "";
+      if (capital && budget && sharesTotal && sharesTotal > 0) {
         positionHtml = `
-        <div class="highlight-box">
-            <b>입력 자본:</b> 약 ${numberWithCommas(capital)}원<br>
-            <b>이 종목에 사용할 최대 금액(자본의 10% 가정):</b> 약 ${numberWithCommas(budget)}원<br>
-            <b>총 매수 가능 수량:</b> 약 ${numberWithCommas(sharesTotal)}주<br><br>
-            <b>표준형 분할 매수 (40% / 30% / 30%) 기준</b><br>
-            · 1차: ${numberWithCommas(pos1Shares)}주 (약 ${numberWithCommas(pos1Amount)}원)<br>
-            · 2차: ${numberWithCommas(pos2Shares)}주 (약 ${numberWithCommas(pos2Amount)}원)<br>
-            · 3차: ${numberWithCommas(pos3Shares)}주 (약 ${numberWithCommas(pos3Amount)}원)
-        </div>`;
-    } else {
+          <div class="highlight-box">
+            <b>💰 오늘 이 종목에 쓸 수 있는 권장 금액 (예시)</b><br>
+            · 입력 자본: <b>${numberWithCommas(capital)}원</b><br>
+            · 이 종목에 사용할 최대 금액 (자본의 10% 가정): <b>${numberWithCommas(
+              budget
+            )}원</b><br>
+            · 현재가 기준 총 매수 가능 수량: <b>${numberWithCommas(
+              sharesTotal
+            )}주</b><br><br>
+            <b>표준형 분할 매수 (40% / 30% / 30%)</b><br>
+            · 1차: <b>${numberWithCommas(
+              pos1Shares
+            )}주</b> (약 ${numberWithCommas(pos1Amount)}원)<br>
+            · 2차: <b>${numberWithCommas(
+              pos2Shares
+            )}주</b> (약 ${numberWithCommas(pos2Amount)}원)<br>
+            · 3차: <b>${numberWithCommas(
+              pos3Shares
+            )}주</b> (약 ${numberWithCommas(pos3Amount)}원)<br>
+          </div>`;
+      } else {
         positionHtml = `
-        <div class="highlight-box">
+          <div class="highlight-box">
             자본을 입력하지 않아 오늘 이 종목에 쓸 수 있는 권장 금액/주수 계산은 생략되었습니다.<br>
             화면 상단에 <b>'투자 가능한 총 자본(원)'</b>을 입력하고 다시 조회하면,
             구체적인 분할 매수 금액과 주수를 함께 볼 수 있습니다.
-        </div>`;
-    }
+          </div>`;
+      }
 
-    const resultHTML = `
+      const resultHTML = `
         <h3>📌 분석 결과: ${signalKor}</h3>
-        <p>실제 조회 심볼: <b>${data.symbol_used}</b></p>
+        <p>실제 조회 심볼: <b>${data.symbol_used || "-"}</b></p>
         <p>현재 가격: <b>${numberWithCommas(today)}원</b></p>
-        <p>5일선 / 20일선: <b>${numberWithCommas(data.ma5)} / ${numberWithCommas(data.ma20)}</b></p>
-        <p>금일 거래량 / 전일 거래량: <b>${numberWithCommas(data.volume_today)} / ${numberWithCommas(data.volume_prev)}</b></p>
+        <p>5일선 / 20일선: <b>${numberWithCommas(
+          data.ma5
+        )} / ${numberWithCommas(data.ma20)}</b></p>
+        <p>금일 거래량 / 전일 거래량: <b>${numberWithCommas(
+          data.volume_today
+        )} / ${numberWithCommas(data.volume_prev)}</b></p>
         <p>RSI(14): <b>${rsiText}</b></p>
 
         <h4>① 조건 충족 내역</h4>
-        ${reasons.map(r => `<div class='tag'>${r}</div>`).join("")}
+        ${
+          reasons.length
+            ? reasons.map((r) => `<div class='tag'>${r}</div>`).join("")
+            : "<small>충족된 조건이 없습니다.</small>"
+        }
 
         <hr/>
         <h4>② 오늘의 손절/익절 참고 가격</h4>
-        · 손절가(약 -3%): <b>${numberWithCommas(data.stop_loss_price)}원</b><br>
-        · 1차 익절(+5%): <b>${numberWithCommas(data.tp1_price)}원</b><br>
-        · 2차 익절(+7%): <b>${numberWithCommas(data.tp2_price)}원</b><br>
+        · 손절가(약 -3%): <b>${numberWithCommas(
+          data.stop_loss_price
+        )}원</b><br>
+        · 1차 익절(+5%): <b>${numberWithCommas(
+          data.tp1_price
+        )}원</b><br>
+        · 2차 익절(+7%): <b>${numberWithCommas(
+          data.tp2_price
+        )}원</b><br>
         <small>※ 위 가격은 참고용 가이드이며, 실제 매매는 본인 판단과 원칙이 최우선입니다.</small>
 
         <hr/>
         <h4>③ 오늘 이 종목에 쓸 수 있는 권장 금액/주수</h4>
         ${positionHtml}
-    `;
 
-    document.getElementById("analysis").innerHTML = resultHTML;
-    document.getElementById("strategy").innerHTML = strategy;
-}
+        <hr/>
+        <h4>④ 오늘의 매매 시나리오 (Step-by-Step 가이드)</h4>
+        ${strategyHtml}
+      `;
 
-// 숫자 천 단위 콤마 – 안전한 버전
-function numberWithCommas(x) {
-    if (x === null || x === undefined || isNaN(x)) return "-";
-    try {
-        return Number(x).toLocaleString('ko-KR');
-    } catch (e) {
-        return x.toString();
+      document.getElementById("analysis").innerHTML = resultHTML;
     }
-}
-</script>
 
+    // 숫자 천 단위 콤마 – 안전한 버전
+    function numberWithCommas(x) {
+      if (x === null || x === undefined || isNaN(x)) return "-";
+      try {
+        return Number(x).toLocaleString("ko-KR");
+      } catch (e) {
+        return x.toString();
+      }
+    }
+  </script>
 </body>
 </html>
